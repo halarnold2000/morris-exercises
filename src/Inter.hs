@@ -1,3 +1,5 @@
+module Inter where
+
 class Fluffy f where
   furry :: (a -> b) -> f a -> f b
 
@@ -120,5 +122,3 @@ instance Fluffy (State s) where
 instance Misty (State s) where
   banana = error "todo"
   unicorn = error "todo"
-
-
