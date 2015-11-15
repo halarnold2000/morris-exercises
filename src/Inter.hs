@@ -162,13 +162,13 @@ lift2' f ma mb = fmap'' f ma `ap` mb
 -- Relative Difficulty: 6
 -- (bonus: use ap + lift2' )
 lift3' :: (Monad' m) => (a -> b -> c -> d) -> m a -> m b -> m c -> m d
-lift3' f ma mb mc = fmap'' f ma `ap` mb `ap` mc
+lift3' f ma mb mc = (lift2' f ma mb) `ap` mc
 
 -- Exercise 18
 -- Relative Difficulty: 6
 -- (bonus: use ap + lift3')
 lift4' :: (Monad' m) => (a -> b -> c -> d -> e) -> m a -> m b -> m c -> m d -> m e
-lift4' f ma mb mc md = fmap'' f ma `ap` mb `ap` mc `ap` md
+lift4' f ma mb mc md = (lift3' f ma mb mc) `ap` md
 
 newtype State s a = State {
   state :: (s -> (s, a))
