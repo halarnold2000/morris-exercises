@@ -53,13 +53,16 @@ instance Functor' (EitherRight t) where
 
 class Monad' m where
   bind' :: (a -> m b) -> m a -> m b
+  bind'' :: m a -> (a -> m b) -> m b
   return' :: a -> m a
   -- Exercise 6
   -- Relative Difficulty: 3
   -- (use bind' and/or return')
   fmap'' :: (a -> b) -> m a -> m b
+
   -- x = ma
   fmap'' f  = bind' $ return' . f
+  bind'' = flip bind'
 
 -- |
 --
@@ -67,6 +70,7 @@ class Monad' m where
 -- Relative Difficulty: 2
 instance Monad' [] where
   bind' f x = concat (fmap' f x)
+
   return' x = [x]
 
 -- Exercise 8
@@ -103,37 +107,68 @@ join' mma = bind' id mma
 
 -- Exercise 13
 -- Relative Difficulty: 6
-apple :: (Monad' m) => m a -> m (a -> b) -> m b
-apple = undefined
+apply' :: (Monad' m) => m a -> m (a -> b) -> m b
+
+-- bind' :: (a - mb) -> ma -> mb
+-- (\f -> fmap'' f ma)
+-- apply' = bind' . flip fmap''
+apply' ma = bind' $ flip fmap'' ma
+
+ap :: (Monad' m) => m (a -> b) -> m a -> m b
+ap mf mx =
+      bind'' mf  ( \f ->
+      bind'' mx  ( \x ->
+      return' (f x)  ))
+
+--apply'' :: (Monad' m) => m (a ->b) -> m a -> m b
+--apply'' ma = bind' $ fmap'' ma
 
 -- Exercise 14
 -- Relative Difficulty: 6
-moppy :: (Monad' m) => [a] -> (a -> m b) -> m [b]
-moppy = error "todo"
+-- actually a 'forM'
+forM' :: (Monad' m) => [a] -> (a -> m b) -> m [b]
+forM' as a_to_mb = foldr fn (return' []) as
+  where
+    fn a mlb =
+         bind' (\x ->
+         bind' (\lb ->
+         return' (x : lb )) mlb ) (a_to_mb a)
+
+mapM' :: (Monad' m) => (a -> m b ) -> [a]  -> m [b]
+mapM' a_to_mb  = foldr binary_fn (return' [])
+  where
+    binary_fn a mlb =
+       bind'' (a_to_mb a) (\x ->
+       bind'' mlb (\lb ->
+       return'  (x : lb) ))
+
+-- mb ---       bind' (\b -> do some stuff here) mb
+-- mlb ---      bind' (\lb -> do some stuff with [b] here) mlb
 
 -- Exercise 15
 -- Relative Difficulty: 6
 -- (bonus: use moppy)
-sausage :: (Monad' m) => [m a] -> m [a]
-sausage = error "todo"
+-- (bonus: use forM)
+seq':: (Monad' m) => [m a] -> m [a]
+seq'  = mapM' id
 
 -- Exercise 16
 -- Relative Difficulty: 6
--- (bonus: use apple + fmap'')
-bind'2 :: (Monad' m) => (a -> b -> c) -> m a -> m b -> m c
-bind'2 = error "todo"
-
+-- (bonus: use ap + fmap'') ap' and fmap''
+-- <*> :: f (a->b) -> (f a -> f b)
+lift2' :: (Monad' m) => (a -> b -> c) -> m a -> m b -> m c
+lift2' f ma mb = fmap'' f ma `ap` mb
 -- Exercise 17
 -- Relative Difficulty: 6
--- (bonus: use apple + bind'2)
-bind'3 :: (Monad' m) => (a -> b -> c -> d) -> m a -> m b -> m c -> m d
-bind'3 = error "todo"
+-- (bonus: use ap + lift2' )
+lift3' :: (Monad' m) => (a -> b -> c -> d) -> m a -> m b -> m c -> m d
+lift3' f ma mb mc = fmap'' f ma `ap` mb `ap` mc
 
 -- Exercise 18
 -- Relative Difficulty: 6
--- (bonus: use apple + bind'3)
-bind'4 :: (Monad' m) => (a -> b -> c -> d -> e) -> m a -> m b -> m c -> m d -> m e
-bind'4 = error "todo"
+-- (bonus: use ap + lift3')
+lift4' :: (Monad' m) => (a -> b -> c -> d -> e) -> m a -> m b -> m c -> m d -> m e
+lift4' f ma mb mc md = fmap'' f ma `ap` mb `ap` mc `ap` md
 
 newtype State s a = State {
   state :: (s -> (s, a))
