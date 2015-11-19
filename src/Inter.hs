@@ -183,13 +183,16 @@ newtype State s a = State {
 -- apply the function f
 --
 
-
 instance Functor' (State s) where
-  fmap' f ms = State $ \s -> let (s', a) = state ms s
-                            in (s', f a)
+  fmap' f ms = State $ \s ->
+      let (s', a) = state ms s
+      in (s', f a)
 
 -- Exercise 20
 -- Relative Difficulty: 10
 instance Monad' (State s) where
-  bind' = error "todo"
-  return' = error "todo"
+  bind' f x =  State $ \s ->
+     let (s', a) = state x s
+     in state (f a) s' -- it gets the s' and the a from binding above
+
+  return' a = State $ \s -> (s, a)
