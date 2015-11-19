@@ -51,17 +51,17 @@ instance Functor' (EitherRight t) where
   --fmap' f x = x
 
 
-class Monad' m where
+class Functor' m => Monad' m where
   bind' :: (a -> m b) -> m a -> m b
   bind'' :: m a -> (a -> m b) -> m b
   return' :: a -> m a
   -- Exercise 6
   -- Relative Difficulty: 3
   -- (use bind' and/or return')
-  fmap'' :: (a -> b) -> m a -> m b
+  --fmap'' :: (a -> b) -> m a -> m b
 
   -- x = ma
-  fmap'' f  = bind' $ return' . f
+  --fmap'' f  = bind' $ return' . f
   bind'' = flip bind'
 
 -- |
@@ -70,7 +70,6 @@ class Monad' m where
 -- Relative Difficulty: 2
 instance Monad' [] where
   bind' f x = concat (fmap' f x)
-
   return' x = [x]
 
 -- Exercise 8
@@ -112,7 +111,7 @@ apply' :: (Monad' m) => m a -> m (a -> b) -> m b
 -- bind' :: (a - mb) -> ma -> mb
 -- (\f -> fmap'' f ma)
 -- apply' = bind' . flip fmap''
-apply' ma = bind' $ flip fmap'' ma
+apply' ma = bind' $ flip fmap' ma
 
 ap :: (Monad' m) => m (a -> b) -> m a -> m b
 ap mf mx =
@@ -157,7 +156,7 @@ seq'  = mapM' id
 -- (bonus: use ap + fmap'') ap' and fmap''
 -- <*> :: f (a->b) -> (f a -> f b)
 lift2' :: (Monad' m) => (a -> b -> c) -> m a -> m b -> m c
-lift2' f ma mb = fmap'' f ma `ap` mb
+lift2' f ma mb = f `fmap'` ma `ap` mb
 -- Exercise 17
 -- Relative Difficulty: 6
 -- (bonus: use ap + lift2' )
@@ -168,16 +167,26 @@ lift3' f ma mb mc = (lift2' f ma mb) `ap` mc
 -- Relative Difficulty: 6
 -- (bonus: use ap + lift3')
 lift4' :: (Monad' m) => (a -> b -> c -> d -> e) -> m a -> m b -> m c -> m d -> m e
-lift4' f ma mb mc md = (lift3' f ma mb mc) `ap` md
+lift4' f ma mb mc = ap (lift3' f ma mb mc)
 
 newtype State s a = State {
   state :: (s -> (s, a))
 }
 
+
 -- Exercise 19
+-- aztecrex
 -- Relative Difficulty: 9
+-- fmap' :: (a ->b) -> f a - > f b
+-- s -> (s, a)
+
+-- apply the function f
+--
+
+
 instance Functor' (State s) where
-  fmap' = error "todo"
+  fmap' f ms = State $ \s -> let (s', a) = state ms s
+                            in (s', f a)
 
 -- Exercise 20
 -- Relative Difficulty: 10
